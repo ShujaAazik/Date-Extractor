@@ -9,7 +9,6 @@ namespace Date_Extractor
     internal class Division
     {
         public string division { get; set; }
-
         public List<Event> events { get; set; }
     }
 }

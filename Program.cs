@@ -8,31 +8,60 @@ using System.Threading.Tasks;
 using System.Net.Http;
 using System.IO;
 using System.Net;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using System.Net.Http.Headers;
+using Date_Extractor.Services;
 
 namespace Date_Extractor
 {
     internal class Program
     {
         enum DayId { Holiday = 1, Saturday = 2, WorkDay = 3, Sunday = 4 }
+        private static readonly HttpClient client = new HttpClient();
 
-        static void Main(string[] args)
+        static async Task Main(string[] args)
         {
-            DateTime start = DateTime.Now;
+            DateTime.TryParse(args[0], out DateTime startDate);
+            DateTime.TryParse(args[1], out DateTime endDate);
+            var dateList = Enumerable.Range(0, endDate.Subtract(startDate).Days + 1).Select(x => startDate.AddDays(x)).ToList();
+            var dayList = new List<Day>();
 
-            //var httpResponse = WebRequest.Create(ConfigurationManager.AppSettings[""Holidays Api""]).GetResponse();
+            var holidays = await ApiCaller.GetBankHolidaysAsync(ConfigurationManager.AppSettings["Holidays Api"]);
 
-            var url = ConfigurationManager.AppSettings["Holidays Api"];
+            var bankHolidayList = new List<DateTime>();
 
-            string json = @"{""england - and - wales"":{""division"":""england - and - wales"",""events"":[{""title"":""New Year’s Day"",""date"":""2017 - 01 - 02"",""notes"":""Substitute day"",""bunting"":true},{""title"":""Good Friday"",""date"":""2017 - 04 - 14"",""notes"":"""",""bunting"":false}]}}";
+            foreach (var division in new List<Division> { holidays.EnglandAndWales, holidays.Scotland, holidays.NorthernIreland })
+            {
+                if (!(division is null))
+                {
+                    bankHolidayList.AddRange(division.events.Select(offset => offset.Date).ToList());
+                }
+            }
 
-            var holidays = JsonSerializer.Deserialize<Division>(json);
+            var weekDays = new DayOfWeek[] {DayOfWeek.Monday, DayOfWeek.Tuesday, DayOfWeek.Wednesday, DayOfWeek.Thursday, DayOfWeek.Friday};
 
-            Console.WriteLine("Enter a Valid Date:");
+            foreach (var date in dateList)
+            {
+                if (bankHolidayList.Any(holdayDate => holdayDate.Equals(date)))
+                {
+                    dayList.Add(new Day { Date = date, TypeID = (int) DayId.Holiday}) ;
+                }
+                else if (date.DayOfWeek == DayOfWeek.Saturday)
+                {
+                    dayList.Add(new Day { Date = date, TypeID = (int) DayId.Saturday});
+                }
+                else if (date.DayOfWeek == DayOfWeek.Sunday)
+                {
+                    dayList.Add(new Day { Date = date, TypeID = (int)DayId.Sunday });
+                }
+                else if (weekDays.Any(day => day.Equals(date.DayOfWeek)))
+                {
+                    dayList.Add(new Day { Date = date, TypeID = (int)DayId.WorkDay });
+                }
+            }
 
-            //var date = Console.ReadLine();
-
-            //File.WriteAllLines("Path",new string[6]);
+            BankHolidayRepo.SaveDays(dayList, $"From {startDate.ToString("dd MMMM yyyy")} to {endDate.ToString("dd MMMM yyyy")}");
         }
     }
 }
