@@ -115,10 +115,11 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="BankHoliday.cs" />
-    <Compile Include="Day.cs" />
-    <Compile Include="Division.cs" />
-    <Compile Include="Event.cs" />
+    <Compile Include="Extractor.cs" />
+    <Compile Include="Models\BankHoliday.cs" />
+    <Compile Include="Models\Day.cs" />
+    <Compile Include="Models\Division.cs" />
+    <Compile Include="Models\Event.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Services\ApiCaller.cs" />
@@ -131,9 +132,7 @@
   <ItemGroup>
     <WCFMetadata Include="Connected Services\" />
   </ItemGroup>
-  <ItemGroup>
-    <Folder Include="Models\" />
-  </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Import Project="packages\System.Text.Json.6.0.2\build\System.Text.Json.targets" Condition="Exists('packages\System.Text.Json.6.0.2\build\System.Text.Json.targets')" />
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
